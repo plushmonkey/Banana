@@ -1,9 +1,6 @@
 package com.plushnode.banana;
 
-import com.plushnode.banana.commands.BanCommand;
-import com.plushnode.banana.commands.CheckCommand;
-import com.plushnode.banana.commands.MuteCommand;
-import com.plushnode.banana.commands.BananaCommand;
+import com.plushnode.banana.commands.*;
 import com.plushnode.banana.controllers.PunishmentController;
 import com.plushnode.banana.listeners.PlayerListener;
 import com.plushnode.banana.storage.BananaDatabase;
@@ -51,6 +48,8 @@ public class BananaPlugin extends Plugin {
         this.getProxy().getPluginManager().registerCommand(this, new MuteCommand(this));
         this.getProxy().getPluginManager().registerCommand(this, new BananaCommand(this));
         this.getProxy().getPluginManager().registerCommand(this, new CheckCommand(this));
+        this.getProxy().getPluginManager().registerCommand(this, new HistoryCommand(this));
+        this.getProxy().getPluginManager().registerCommand(this, new UnmuteCommand(this));
     }
 
     public Configuration getConfig() {

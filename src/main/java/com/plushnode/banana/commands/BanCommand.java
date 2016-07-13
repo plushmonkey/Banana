@@ -30,5 +30,5 @@ public class BanCommand extends Command {
         Punishment punishment = plugin.getPunishmentController().punish(ipAddress, Action.BAN, 15000, sender.getName(), reason);
         punishment.save();
         target.disconnect(new TextComponent(reason));
-}
+    }
 }

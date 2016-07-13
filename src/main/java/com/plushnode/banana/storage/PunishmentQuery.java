@@ -10,11 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+// Gets a ResultSet for a punishment that matches certain actions
+// Can be either uuid or IP lookup. IP lookup will override uuid lookup.
 public class PunishmentQuery {
     private String table;
     private UUID uuid;
     private String ipAddress;
     private List<Action> actions;
+    private String server = "";
     private PreparedStatement statement = null;
 
     public PunishmentQuery(String table) {
@@ -44,6 +47,11 @@ public class PunishmentQuery {
         return this;
     }
 
+    public PunishmentQuery server(String server) {
+        this.server = server;
+        return this;
+    }
+
     public PunishmentQuery action(Action action) {
         this.actions.add(action);
         return this;
@@ -52,6 +60,9 @@ public class PunishmentQuery {
     public ResultSet execute(Database database) {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT * FROM ").append(table).append(" WHERE ");
+
+        if (server.length() > 0)
+            sb.append(" server=? AND ");
 
         if (ipAddress != null && ipAddress.length() > 0) {
             sb.append("ip=?");
@@ -74,15 +85,21 @@ public class PunishmentQuery {
             sb.append(")");
         }
 
+        sb.append(" ORDER BY id DESC");
+
         this.statement = database.prepare(sb.toString());
+        int currentPos = 1;
         try {
+            if (this.server.length() > 0)
+                statement.setString(currentPos++, this.server);
+
             if (ipAddress != null && ipAddress.length() > 0)
-                statement.setString(1, ipAddress);
+                statement.setString(currentPos, ipAddress);
             else
-                statement.setString(1, uuid.toString());
+                statement.setString(currentPos, uuid.toString());
 
             for (int i = 0; i < actions.size(); ++i)
-                statement.setInt(2 + i, actions.get(i).ordinal());
+                statement.setInt(currentPos + 1 + i, actions.get(i).ordinal());
 
             return statement.executeQuery();
         } catch (SQLException e) {

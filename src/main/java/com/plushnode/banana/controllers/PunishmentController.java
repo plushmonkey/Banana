@@ -20,7 +20,7 @@ public class PunishmentController {
 
     public Punishment punish(UUID uuid, Action action, long length, String executor, String reason) {
         Punishment punishment = new Punishment(PunishmentTargetType.PLAYER, uuid.toString(), action,
-                new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis() + length), executor, reason);
+                new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis() + length), executor, reason, Punishment.GLOBAL_SERVER);
         punishment.setTable("PlayerPunishment");
         punishment.setDatabase(database);
         return punishment;
@@ -28,7 +28,23 @@ public class PunishmentController {
 
     public Punishment punish(String ipAddress, Action action, long length, String executor, String reason) {
         Punishment punishment = new Punishment(PunishmentTargetType.IPADDRESS, ipAddress, action,
-                new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis() + length), executor, reason);
+                new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis() + length), executor, reason, Punishment.GLOBAL_SERVER);
+        punishment.setTable("IPPunishment");
+        punishment.setDatabase(database);
+        return punishment;
+    }
+
+    public Punishment punish(UUID uuid, Action action, long length, String executor, String reason, String server) {
+        Punishment punishment = new Punishment(PunishmentTargetType.PLAYER, uuid.toString(), action,
+                new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis() + length), executor, reason, server);
+        punishment.setTable("PlayerPunishment");
+        punishment.setDatabase(database);
+        return punishment;
+    }
+
+    public Punishment punish(String ipAddress, Action action, long length, String executor, String reason, String server) {
+        Punishment punishment = new Punishment(PunishmentTargetType.IPADDRESS, ipAddress, action,
+                new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis() + length), executor, reason, server);
         punishment.setTable("IPPunishment");
         punishment.setDatabase(database);
         return punishment;
@@ -50,21 +66,15 @@ public class PunishmentController {
         return isPunished(query);
     }
 
-    private Optional<String> isPunished(PunishmentQuery query) {
+    public Optional<String> isPunished(PunishmentQuery query) {
         List<Punishment> punishments = getPunishments(query);
-        long now = System.currentTimeMillis();
-
-        Optional<String> result = Optional.empty();
 
         for (Punishment punishment : punishments) {
-            if (punishment.getExpiration().getTime() <= now) {
-                punishment.delete();
-            } else if (!result.isPresent()) {
-                result = Optional.of(punishment.getReason());
-            }
+            if (Punishment.isActive(punishment))
+                return Optional.of(punishment.getReason());
         }
 
-        return result;
+        return Optional.empty();
     }
 
     public List<Punishment> getPunishments(PunishmentQuery query) {
@@ -81,9 +91,14 @@ public class PunishmentController {
                 Timestamp expiration = result.getTimestamp("expiration");
                 String executor = result.getString("executor");
                 String reason = result.getString("reason");
+                String server = result.getString("server");
+                String removedBy = result.getString("removedby");
+                Timestamp removedAt = result.getTimestamp("removedat");
 
-                Punishment punishment = new Punishment(targetType, target, action, timestamp, expiration, executor, reason);
+                Punishment punishment = new Punishment(targetType, target, action, timestamp, expiration, executor, reason, server);
 
+                if (removedBy != null && !removedBy.isEmpty())
+                    punishment.remove(removedBy, removedAt);
                 punishment.setDatabase(database);
                 punishment.setId(id);
                 punishment.setTable(query.getTable());
