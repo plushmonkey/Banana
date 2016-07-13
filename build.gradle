@@ -1,0 +1,66 @@
+apply plugin: 'idea'
+apply plugin: 'java'
+
+version = '0.1'
+
+compileJava {
+	sourceCompatibility = '1.8'
+}
+
+repositories {
+	mavenCentral()
+	maven {
+		url "https://oss.sonatype.org/content/repositories/snapshots"
+	}
+	flatDir {
+		dirs 'libs'
+	}
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs = ['src/main/java']
+		}
+	}
+}
+
+processResources {
+	filter {
+		line ->
+		line
+		.replace('${name}', project.name)
+		.replace('${version}', project.version)
+	}
+}
+
+jar {
+	manifest {
+		attributes 'Implementation-Title': project.name,
+		           'Implementation-Version': project.version
+	}
+}
+
+configurations {
+	provided
+	compile.extendsFrom provided
+}
+
+dependencies {
+	provided 'net.md-5:bungeecord-api:1.10-SNAPSHOT'
+	compile 'mysql:mysql-connector-java:6.0.3'
+	compile 'org.xerial:sqlite-jdbc:3.8.11.2'
+}
+
+task fatJar(type: Jar) {
+	manifest {
+		attributes 'Implementation-Title': project.name,
+		           'Implementation-Version': project.version
+	}
+	from {
+		(configurations.runtime - configurations.provided).collect { it.isDirectory() ? it : zipTree(it) }
+	}
+	with jar
+}
+
+buildDir = 'bin'

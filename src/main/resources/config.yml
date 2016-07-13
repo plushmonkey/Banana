@@ -1,0 +1,28 @@
+storage:
+  # Supported engines: mysql, sqlite
+  engine: 'sqlite'
+  sqlite:
+    # The file where the database is saved. It's saved in the plugins/Banana folder.
+    store: 'banana.db'
+  mysql:
+    host: '127.0.0.1'
+    port: 3306
+    username: 'banana'
+    password: 'secure'
+    database: 'banana'
+
+punishment:
+  mute:
+    # Commands in this list are not allowed to be used while muted.
+    commands:
+    - '/msg'
+    - '/tell'
+    - '/me'
+    - '/suicide'
+    - '/afk'
+  warn:
+    # How long a warning is considered active. Unit: days.
+    # Active warnings will show up in /check for staff.
+    # This is useful for quickly seeing if the player is a troublemaker.
+    # Older warns can still be found in /history.
+    activeTime: 30
